@@ -1,9 +1,9 @@
 package com.teamtreehouse.model;
 
-import java.io.IOException;
-import java.util.*;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.*;
 
 public class TeamCreation {
     private BufferedReader mReader;
@@ -11,8 +11,8 @@ public class TeamCreation {
     private CollectionOfTeams mCollectionOfTeams;
     private List<Player> mPlayers;
 
-    public TeamCreation(CollectionOfTeams collectionOfTeams)
-    {
+    public TeamCreation(CollectionOfTeams collectionOfTeams) {
+//Create a menu for the user
         mPlayers = new ArrayList<>(Arrays.asList(Players.load()));
         mReader = new BufferedReader(new InputStreamReader(System.in));
         mMenu = new HashMap<>();
@@ -22,33 +22,40 @@ public class TeamCreation {
         mMenu.put("remove player", "Remove player from a team");
         mMenu.put("height report", "View Height report of players in a team");
         mMenu.put("balance report", "View League Balance report");
-        mMenu.put("queue", "Play next song in the queue");
+        mMenu.put("player rooster", "View a team rooster");
+        mMenu.put("queue", "");
         mMenu.put("quit", "Exit the program");
     }
-    private String promptAction() throws IOException{
-        System.out.printf("Welcome. Your menu options are: %n");
+
+    //Create the display of the options for the Map menu.
+    private String promptAction() throws IOException {
+        System.out.printf("%nWelcome. Your menu options are: %n%n");
         for (Map.Entry<String, String> option : mMenu.entrySet()) {
             System.out.printf("%s - %s %n",
                     option.getKey(),
                     option.getValue());
         }
 
-        System.out.print("What do you want to do:  ");
+        System.out.printf("%n%nWhat do you want to do:  %n");
         String choice = mReader.readLine();
         return choice.trim().toLowerCase();
     }
 
+    //Here we can receive/store users input for team creation
     private String promptCreateTeamName() throws IOException {
         System.out.println("Provide the name of your new team: ");
         String choice = mReader.readLine();
         return choice.trim().toLowerCase();
     }
 
+    //Here we can receive/store users input for teams coach
     private String promptCoachName() throws IOException {
         System.out.println("Provide the name of your coach: ");
         String choice = mReader.readLine();
         return choice.trim().toLowerCase();
     }
+
+    //The method collects the inputs and creates a new team.
     private void newTeam() throws IOException {
         String newTeamName = promptCreateTeamName();
         String newCoachName = promptCoachName();
@@ -57,25 +64,40 @@ public class TeamCreation {
         System.out.printf("Team: %s and coach: %s were added correctly.  %n", newTeamName, newCoachName);
     }
 
+    // This method helps us select a team and if there is no teams to pick from returns null.
     private Team selectTeam() throws IOException {
         System.out.println("Select a number for the team of your choice from the following list: ");
-        int playerNumber = 1;
-        for (Team team: mCollectionOfTeams.getTeams()) {
-            System.out.println(playerNumber++ + ".) " + team.getTeamName());
+        if (!mCollectionOfTeams.getTeams().isEmpty()) {
+            int playerNumber = 1;
+            for (Team team : mCollectionOfTeams.getTeams()) {
+                System.out.println(playerNumber++ + ".) " + team.getTeamName());
+            }
+            System.out.println("Enter the team number of your choice: ");
+            String optionChosen = mReader.readLine();
+            int indexNumber = (Integer.parseInt(optionChosen) - 1);
+            if (indexNumber < 0 || indexNumber >= mCollectionOfTeams.getTeams().size()) {
+                System.out.println("Invalid team selection");
+                return null;
+            }
+            return (Team) mCollectionOfTeams.getTeams().toArray()[indexNumber];
+        } else {
+            return null;
         }
-        String optionChosen = mReader.readLine();
-        int indexNumber = (Integer.parseInt(optionChosen) - 1);
-        return (Team) mCollectionOfTeams.getTeams().toArray()[indexNumber];
     }
 
+    //Here we can check if there are players in a team and if there are we can show the players to the user.
     private void showTeamPlayers(Team selectedTeam) throws IOException {
         int playersCounter = 1;
-        for (Player player: selectedTeam.getPlayers()){
+        if (selectedTeam.getPlayers().isEmpty()) {
+            System.out.println("No players available to delete.");
+            return;
+        }
+        for (Player player : selectedTeam.getPlayers()) {
             String name = player.getFirstName();
             String lastName = player.getLastName();
             int height = player.getHeightInInches();
             boolean experience = player.isPreviousExperience();
-            System.out.printf( "%d.) Name: %s %s/ %n Height in inch: %s %n Previous experience: %s",
+            System.out.printf("%d.) Name: %s %s/ %n Height in inch: %s %n Previous experience: %s %n",
                     playersCounter,
                     name,
                     lastName,
@@ -86,147 +108,233 @@ public class TeamCreation {
         }
     }
 
-    private void addPlayerToTeam() throws IOException{
-        Team teamSelected = selectTeam();
-        System.out.println("Select a player to add to the team from the following list: ");
-        int playersCounter = 1;
+    /*
+    This method helps us check that there are teams to be able to add players to a team.
+    We also check that there are players available to add to the teams.
+     */
+    private void addPlayerToTeam() throws IOException {
         List<Player> availablePlayers = mPlayers;
-        for (Player player: teamSelected.getPlayers()){
-            mPlayers.remove(player);
-        }
-        // Loop to print players info
-        for(Player player: mPlayers) {
-            String name = player.getFirstName();
-            String lastName = player.getLastName();
-            int height = player.getHeightInInches();
-            boolean experience = player.isPreviousExperience();
-            System.out.printf( "%d.) Name: %s %s/ %n Height in inch: %s %n Previous experience: %s",
-                    playersCounter,
-                    name,
-                    lastName,
-                    height,
-                    experience);
-            playersCounter++;
-        }
-        //Save user's input to obtain index of the player to add to the team.
-        String playerToAdd = mReader.readLine();
-        int indexNumber = (Integer.parseInt(playerToAdd) - 1);
-        //Check and add the player to the team if input is valid.
-        if(indexNumber >= 0 && indexNumber < availablePlayers.size()) {
-            Player selectedPlayer =  availablePlayers.get(indexNumber);
-            teamSelected.addPlayer(selectedPlayer);
-            System.out.printf("Player %s has been added to %s team. ",
-                    selectedPlayer.getFirstName(),
-                    selectTeam().getTeamName());
+        Team teamSelected = selectTeam();
+        if (teamSelected != null) {
+            if (availablePlayers.isEmpty()) {
+                System.out.println("No players available to add.");
+                return;
+            }
+            System.out.println("Select a player to add to the team from the following list: ");
+            int playersCounter = 1;
+            // Loops over the available players to display to the user their information.
+            for (Player player : availablePlayers) {
+                String name = player.getFirstName();
+                String lastName = player.getLastName();
+                int height = player.getHeightInInches();
+                boolean experience = player.isPreviousExperience();
+                System.out.printf("%d.) Name: %s %s/ %n Height in inch: %s %n Previous experience: %s %n",
+                        playersCounter,
+                        name,
+                        lastName,
+                        height,
+                        experience);
+                playersCounter++;
+            }
+            System.out.println("Select the player number to add to your new team:  ");
+            String playerToAdd = mReader.readLine();
+            int indexNumber = (Integer.parseInt(playerToAdd) - 1);
+            //Check that user input (player chosen) exists and adds it to the team if it does.
+            if (indexNumber >= 0 && indexNumber < availablePlayers.size()) {
+                Player selectedPlayer = availablePlayers.get(indexNumber);
+                if (teamSelected.addPlayer(selectedPlayer)) {
+                    // We remove the player from the available list of players.
+                    availablePlayers.remove(selectedPlayer);
+                    System.out.printf("%n%n%nPlayer %s has been added to %s team. %n%n%n",
+                            selectedPlayer.getFirstName(),
+                            teamSelected.getTeamName());
+                }
+
+            } else {
+                System.out.println("Whoops an invalid player number was provided.");
+            }
+
         } else {
-            System.out.println("Whoops an invalid player number was provided.");
+            System.out.println("There are no teams available, please create a team to add players to.");
         }
     }
 
+
+    /*We check that there are teams to choose from ,and then players inside the chosen team to
+    be able to remove a player.
+     */
     private void removePlayer() throws IOException {
         Team teamSelected = selectTeam();
-        showTeamPlayers(teamSelected);
-        System.out.println("Choose number of the player you want to remove:   ." );
-        String choice = mReader.readLine();
-        int playerNumberToDelete = Integer.parseInt(choice.trim());
-        List<Player> players = teamSelected.getPlayers();
-        int indexNumber = ((playerNumberToDelete) - 1);
-        //Check and add the player to the team if input is valid.
-        if(indexNumber >= 0 && indexNumber < players.size()) {
-            Player playerToDelete =  players.get(indexNumber);
-            teamSelected.removePlayer(playerToDelete);
-            System.out.printf("Player %s has been removed from %s team. ",
-                    playerToDelete.getFirstName(),
-                    selectTeam().getTeamName());
+        if (teamSelected != null) {
+            if (teamSelected.getPlayers().isEmpty()) {
+                System.out.println("There are no players in this team. ");
+            } else {
+                showTeamPlayers(teamSelected);
+                System.out.println("Choose number of the player you want to remove:   .");
+                String choice = mReader.readLine();
+                int playerNumberToDelete = Integer.parseInt(choice.trim());
+                List<Player> players = teamSelected.getPlayers();
+                int indexNumber = ((playerNumberToDelete) - 1);
+                //Check and add the player to the team if input is valid.
+                if (indexNumber >= 0 && indexNumber < players.size()) {
+                    Player playerToDelete = players.get(indexNumber);
+                    teamSelected.removePlayer(playerToDelete);
+                    System.out.printf("Player %s has been removed from %s team. ",
+                            playerToDelete.getFirstName(),
+                            teamSelected.getTeamName());
+                } else {
+                    System.out.printf("Whoops an invalid player number was provided. %d is doesn't exist in %s ",
+                            indexNumber,
+                            teamSelected.getTeamName());
+                }
+
+            }
         } else {
-            System.out.printf("Whoops an invalid player number was provided. %d is doesn't exist in %s ",
-                    indexNumber,
-                    teamSelected.getTeamName());
+            System.out.println("There are no teams created, please try deleting after creating some teams");
         }
 
     }
 
-
+    //Check there are teams available and players to be able to generate a players report by height.
     private void reportByHeight() throws IOException {
         Team selectedTeam = selectTeam();
-        List<Player> players = selectedTeam.getPlayers();
-        List<Player> firstRange = new ArrayList<>();
-        List<Player> secondRange = new ArrayList<>();
-        List<Player> thirdRange = new ArrayList<>();
-        for (Player player : players) {
-            int playerHeight = player.getHeightInInches();
-            if (playerHeight >= 35 && playerHeight <= 40) {
-                firstRange.add(player);
-            } else if (playerHeight >= 41 && playerHeight <= 46) {
-                secondRange.add(player);
-            } else if (playerHeight >= 47 && playerHeight <= 51) {
-                thirdRange.add(player);
-            }
-        }
-        System.out.println("Height players report of the team: " + selectedTeam.getTeamName());
-        System.out.println("35-40 inches: ");
-        for (Player player : firstRange) {
-            System.out.printf("Name: %s %s | Height in inches: %s | Experience: %s %n",
-                    player.getFirstName(),
-                    player.getLastName(),
-                    player.getHeightInInches(),
-                    player.isPreviousExperience());
-        }
-
-        System.out.println("41-46 inches: ");
-        for (Player player : secondRange) {
-            System.out.printf("Name: %s %s | Height in inches: %s | Experience: %s %n",
-                    player.getFirstName(),
-                    player.getLastName(),
-                    player.getHeightInInches(),
-                    player.isPreviousExperience());
-        }
-
-        System.out.println("47-51 inches: ");
-        for (Player player : thirdRange) {
-            System.out.printf("Name: %s %s | Height in inches: %s | Experience: %s %n",
-                    player.getFirstName(),
-                    player.getLastName(),
-                    player.getHeightInInches(),
-                    player.isPreviousExperience());
-        }
-    }
-
-    private void leagueBalanceReport () {
-        Map<String, int[]> teamExperienceStats = new HashMap<>();
-
-        for (Team team : mCollectionOfTeams.getTeams()) {
-            int experiencedPlayersCount = 0;
-            int inexperiencedPlayersCount = 0;
-            for (Player player : team.getPlayers()) {
-                if (player.isPreviousExperience()) {
-                    experiencedPlayersCount++;
-                } else {
-                    inexperiencedPlayersCount++;
+        if (selectedTeam != null) {
+            List<Player> players = selectedTeam.getPlayers();
+            if (!players.isEmpty()) {
+                //We create 3 empty lists to store the players that belong to its corresponding height category.
+                List<Player> firstRange = new ArrayList<>();//35-40 inches
+                List<Player> secondRange = new ArrayList<>();//41-46 inches
+                List<Player> thirdRange = new ArrayList<>();//47-51 inches
+                //Loop through players to sort them depending on their height.
+                for (Player player : players) {
+                    int playerHeight = player.getHeightInInches();
+                    if (playerHeight >= 35 && playerHeight <= 40) {
+                        firstRange.add(player);
+                    } else if (playerHeight >= 41 && playerHeight <= 46) {
+                        secondRange.add(player);
+                    } else if (playerHeight >= 47 && playerHeight <= 51) {
+                        thirdRange.add(player);
+                    }
                 }
-            }
-            teamExperienceStats.put(team.getTeamName(),new int[]{experiencedPlayersCount,inexperiencedPlayersCount});
-        }
-        for(Map.Entry<String, int[]> entry: teamExperienceStats.entrySet()) {
-            String teamName = entry.getKey();
-            int[] totalCounts = entry.getValue();
-            int experiencedCount = totalCounts[0];
-            int inexperiencedCount = totalCounts[1];
-            int totalPlayersCount = experiencedCount + inexperiencedCount;
-            float experiencePercentage = ((float) experiencedCount / totalPlayersCount);
-            float inexperiencePercentage = ((float) inexperiencedCount / totalPlayersCount);
-            System.out.printf("Team: %s | Experienced players: %d = %f%% | Inexperienced players: %d = %f%%",
-                    teamName,
-                    experiencedCount,
-                    experiencePercentage,
-                    inexperiencedCount,
-                    inexperiencePercentage);
 
+                //Retrieve the data from the 3 lists we created and then display it to the user.
+                System.out.println("Height players report of the team: " + selectedTeam.getTeamName());
+                System.out.println("%n35-40 inches: ");
+                for (Player player : firstRange) {
+                    System.out.printf("Name: %s %s | Height in inches: %s | Experience: %s %n",
+                            player.getFirstName(),
+                            player.getLastName(),
+                            player.getHeightInInches(),
+                            player.isPreviousExperience());
+                }
+
+                System.out.println("%n41-46 inches: ");
+                for (Player player : secondRange) {
+                    System.out.printf("Name: %s %s | Height in inches: %s | Experience: %s %n",
+                            player.getFirstName(),
+                            player.getLastName(),
+                            player.getHeightInInches(),
+                            player.isPreviousExperience());
+                }
+
+                System.out.println("%n47-51 inches: ");
+                for (Player player : thirdRange) {
+                    System.out.printf("Name: %s %s | Height in inches: %s | Experience: %s %n",
+                            player.getFirstName(),
+                            player.getLastName(),
+                            player.getHeightInInches(),
+                            player.isPreviousExperience());
+                }
+            } else {
+                System.out.println("There are no players to display. ");
+            }
+        } else {
+            System.out.println("There are no teams available, try again after adding some.");
         }
     }
 
+    //We generate the balance report of all the teams to see how balanced they are.
+    private void leagueBalanceReport() {
+        Map<String, int[]> teamExperienceStats = new HashMap<>();
+        if (mCollectionOfTeams.getTeams().isEmpty()) {
+            System.out.println("No teams available, add teams and players to generate a report. ");
+        } else {
+            for (Team team : mCollectionOfTeams.getTeams()) {
+                int experiencedPlayersCount = 0;
+                int inexperiencedPlayersCount = 0;
+                for (Player player : team.getPlayers()) {
+                    if (player.isPreviousExperience()) {
+                        experiencedPlayersCount++;
+                    } else {
+                        inexperiencedPlayersCount++;
+                    }
+                }
+                teamExperienceStats.put(team.getTeamName(), new int[]{experiencedPlayersCount, inexperiencedPlayersCount});
+            }
+            for (Map.Entry<String, int[]> entry : teamExperienceStats.entrySet()) {
+                String teamName = entry.getKey();
+                int[] totalCounts = entry.getValue();
+                int experiencedCount = totalCounts[0];
+                int inexperiencedCount = totalCounts[1];
+                int totalPlayersCount = experiencedCount + inexperiencedCount;
+                float experiencePercentage = ((float) totalPlayersCount / experiencedCount);
+                float inexperiencePercentage = ((float) totalPlayersCount / inexperiencedCount);
+                System.out.printf("%nTeam: %s | Experienced players: %d = %f%% | Inexperienced players: %d = %f%% %n",
+                        teamName,
+                        experiencedCount,
+                        experiencePercentage,
+                        inexperiencedCount,
+                        inexperiencePercentage);
 
-//    public void run(){}
+            }
+        }
+
+    }
+
+
+    public void run() {
+        String choice = "";
+        do {
+            try {
+                choice = promptAction();
+                switch (choice) {
+                    case "create":
+                        newTeam();
+                        break;
+                    case "add player":
+                        addPlayerToTeam();
+                        break;
+                    case "remove player":
+                        removePlayer();
+                        break;
+                    case "height report":
+                        reportByHeight();
+                        break;
+                    case "balance report":
+                        leagueBalanceReport();
+                        break;
+                    case "player rooster":
+                        Team selectedTeam = selectTeam();
+                        showTeamPlayers(selectedTeam);
+                        break;
+                    case "queue":
+                        break;
+                    case "quit":
+                        System.out.println("See you later alligator :)");
+                        break;
+                    default:
+                        System.out.printf("Unknown choice: '%s'. Try again.  %n%n%n",
+                                choice);
+                }
+
+
+            } catch (IOException ioe) {
+                System.out.println("Problem with input");
+                ioe.printStackTrace();
+            }
+
+        } while (!choice.equals("quit"));
+    }
 
 
 }
