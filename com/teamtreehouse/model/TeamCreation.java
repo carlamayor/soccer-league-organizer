@@ -277,9 +277,9 @@ public class TeamCreation {
                 int experiencedCount = totalCounts[0];
                 int inexperiencedCount = totalCounts[1];
                 int totalPlayersCount = experiencedCount + inexperiencedCount;
-                float experiencePercentage = ((float) totalPlayersCount / experiencedCount);
-                float inexperiencePercentage = ((float) totalPlayersCount / inexperiencedCount);
-                System.out.printf("%nTeam: %s | Experienced players: %d = %f%% | Inexperienced players: %d = %f%% %n",
+                float experiencePercentage = ((float) experiencedCount / totalPlayersCount) * 100;
+                float inexperiencePercentage = ((float) inexperiencedCount / totalPlayersCount) * 100;
+                System.out.printf("%nTeam: %s | Experienced players: %d = %.2f%% | Inexperienced players: %d = %.2f%% %n",
                         teamName,
                         experiencedCount,
                         experiencePercentage,
