@@ -100,7 +100,8 @@ public class TeamCreation {
             System.out.println("No players available to delete.");
             return;
         }
-        for (Player player : selectedTeam.getPlayers()) {
+        Set<Player> playersByLastName = new TreeSet<>(selectedTeam.getPlayers());
+        for (Player player : playersByLastName) {
             String name = player.getFirstName();
             String lastName = player.getLastName();
             int height = player.getHeightInInches();

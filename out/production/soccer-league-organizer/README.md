@@ -1,2 +1,0 @@
-# soccer-league-organizer
- 
