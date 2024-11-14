@@ -335,10 +335,14 @@ public class TeamCreation {
             });
             int teamIndex = 0;
             List<Team> teams = new ArrayList<>(mCollectionOfTeams.getTeams());
-            for (Player player : mPlayers) {
-                teams.get(teamIndex).addPlayer(player);
-                teamIndex = (teamIndex + 1) % 3;
+            Iterator<Player> iterator = mPlayers.iterator();
+            while (iterator.hasNext()){
+                Player player = iterator.next();
+                if( teams.get(teamIndex).addPlayer(player)) {
+                    iterator.remove();
                 }
+                teamIndex = (teamIndex + 1) % 3;
+            }
 
 
 
